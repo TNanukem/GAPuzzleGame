@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include<time.h> 
+#include<time.h>
 
 int* generatePopulation(){
 
@@ -17,11 +17,11 @@ int* select_reproducers(int *population, int *fitness_vector, int population_siz
     float r, k = 0.75;
 
     new_population = (int*) malloc(sizeof(int) * new_pop_size);
-    
+
     for(i = 0; i < new_pop_size; i++){
         candidate_1 = rand() % population_size;
         candidate_2 = rand() % population_size;
-        r = (float) rand() / population_size;
+        r = (float) rand() / RAND_MAX;
 
         // They need to be different
         while(candidate_2 == candidate_1){
@@ -75,11 +75,10 @@ int main (int argc, char* argv[]){
     int board[9], i;
     int solved = 0;
     int *population, *fitness_vector, *selected;
-    time_t t;
 
     int new_pop_size, population_size = 10; // Isso aqui o certo é mudar dentro do loop, mas ainda n sei como
 
-    srand((unsigned) time(&t));
+		srand(time(NULL));
 
     // Requires the puzzle game
     if(argc < 2){
@@ -98,12 +97,12 @@ int main (int argc, char* argv[]){
         fscanf (p, "%d", &board[i]);
         printf("%d ", board[i]);
     }
-    
+
     // Generate a random population
     population = generatePopulation();
 
     while(solved == 0){
-        
+
         // Também não tá certo, precisa ver o jeito certo
         new_pop_size = population_size - 1;
 
