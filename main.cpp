@@ -31,6 +31,22 @@ typedef vector<float> probability_vector;
 // Generate and return an initial random population of chromosomes
 pop_vector generatePopulation(size_t initial_pop_size){
 
+	pop_vector population;
+	population.resize(initial_pop_size);
+
+	for(auto& chromosome : population)
+	{
+		chromosome.resize(4);
+		for(auto&& cell : chromosome)
+		{
+			if(rand() % 100 > 50)
+				cell = 1;
+			else
+				cell = 0;
+		}
+	}
+
+	return population;
 }
 
 // Check if any chromosome is unsolvable and, if so, removes it from the population
