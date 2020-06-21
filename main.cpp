@@ -7,6 +7,10 @@
 #include <cassert>
 
 #define BOARD_DIM 3
+#define DOWN 0
+#define UP 1
+#define RIGHT 2
+#define LEFT 3
 
 #define t_fitness float
 
@@ -45,7 +49,6 @@ pop_vector generatePopulation(size_t initial_pop_size){
 				cell = 0;
 		}
 	}
-
 	return population;
 }
 
@@ -65,9 +68,25 @@ void check_solvability(pop_vector& population){
 
 }
 
+
+// Given a chromosome, goes down on the tree to grab the final board for him
+board_array downOnTree(chromosome_vector& chromosome){
+
+	// Corner -> Only one possibility ((0,2),(2,0),(0,0),(2,2))
+	// Edge -> Two possibilities ((0,1), (1,0), (2,1), (1,2))
+	// Middle -> Three possibilities ((1,1))
+
+	array<int, 2> blank_position = {2, 2};
+	int previous_move = NULL;
+
+}
+
 // Calculate and return the fitness of each chromosome
 fitness_vector fitnessCalculation(pop_vector& population){
 
+	for (auto &chromosome : population){
+		board_array chromosome_final_board = downOnTree(chromosome);
+	}
 }
 
 // Calculate the probability of selection for each chromosome based on its fitness value
@@ -157,10 +176,21 @@ pop_vector reproducePopulation(const pop_vector& parents, float crossover_probab
 
 // Flip one random bit of each chromosome according to a fixed probability rate
 void mutatePopulation(pop_vector& population, float probability){
-
+	
+	for (auto &chromosome : population){
+		for (auto &&cell : chromosome)
+		{
+			if (rand() % 100 > (probability*100)){
+				// Bit flipping
+				cell = 1 - cell;
+				// If flips, then no other change is made on the chromosome
+				break;
+			}
+		}
+	}
 }
 
-// Verifies if any chromosome on population have achivied a solution.
+// Verifies if any chromosome on population have achieved a solution.
 // If a solution have been found, fill the "solution" vector with the chosen solution
 bool isSolved(const pop_vector& population, chromosome_vector& solution){
 
@@ -200,10 +230,10 @@ int main (int argc, char* argv[]){
 	cout << "\n";
 
 	size_t initial_pop_size = 100;
-
+	
 	// Generate a random population
 	pop_vector population = generatePopulation(initial_pop_size);
-
+	
 	bool solved = false;
 	chromosome_vector solution;
 
@@ -212,7 +242,10 @@ int main (int argc, char* argv[]){
 
 	unsigned generation = 1;
 
+
 	while(solved == false){
+
+		cout << "Running generation", generation;
 
 		// Check if any chromosome is unsolvable and, if so, removes it from the population
 		check_solvability(population);
