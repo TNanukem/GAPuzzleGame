@@ -367,16 +367,12 @@ pop_vector reproducePopulation(const pop_vector& parents, float crossover_probab
 
 // Flip one random bit of each chromosome according to a fixed probability rate
 void mutatePopulation(pop_vector& population, float probability){
-	
+
 	for (auto &chromosome : population){
-		for (auto &&cell : chromosome)
-		{
-			if (rand() % 100 > (probability*100)){
-				// Bit flipping
-				cell = 1 - cell;
-				// If flips, then no other change is made on the chromosome
-				break;
-			}
+		
+		if (rand() % 100 < (probability*100)){
+			cell = rand() % chromosome.size();
+			chromosome[cell] = 1 - chromosome[cell];
 		}
 	}
 }
