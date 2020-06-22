@@ -353,21 +353,88 @@ pop_vector selectReproducers(const pop_vector& population, const fitness_vector&
 	return parents;
 }
 
-// Cross every pair of consecutive parents, which will generate new pairs of chromosomes (a new population)
-// The "generation" variable is used to control the number of board moves made by each chromosome
-pop_vector reproducePopulation(const pop_vector& parents, float crossover_probability, unsigned generation){
-
-	// para concatenar bits aos cromossomos, utilizem o método "push_back" do vector
-
-	// por exemplo, o código abaixo cria uma população igual aos pais e concatena um 0 no final do 5º cromossomo:
-	pop_vector population = parents;
-	population[4].push_back(0);
-
+//Function that adds random binary numbers at the end of each child
+//Duplicates the size of the chromossome for each child
+chromosome_vector generateTail(const chromosome_vector& child)
+{
+	chromosome_vector aux = child;
+	size_t bin;
+	srand(time(NULL));
+	for (size_t i = 0; i < child.size(); i++)
+	{
+		bin = rand()%2;
+		aux.push_back(bin);
+	}
+	return aux;
 }
+
+//Generates the crossover for the next generation
+pop_vector crossOver(const chromosome_vector& chromossomeX,const chromosome_vector& chromossomeY, size_t crossover_point)
+{
+	chromosome_vector childX;
+	chromosome_vector childY;
+	pop_vector child;
+	size_t tam = chromossomeX.size();
+
+	//Create copies of the chromossome until the crossover point
+	for(size_t i = 0; i < crossover_point; i++)
+	{
+		childX.push_back(chromossomeX[i]);
+		childY.push_back(chromossomeY[i]);
+	}
+	//Complete the children adding binaries from the parent after the crossover point
+	for (size_t i = crossover_point; i < tam; i++)
+	{
+		childX.push_back(chromossomeY[i]);
+		childY.push_back(chromossomeX[i]);
+	}
+	child.push_back(childX);
+	child.push_back(childY);
+
+	return child;	
+}
+
+// Cross every pair of consecutive parents, which will generate new pairs of chromosomes (a new population)
+pop_vector reproducePopulation(const pop_vector& parents, float crossover_probability){
+
+	float random;
+	size_t tam = parents[0].size();
+	size_t crossover_point;
+	
+	//Array that will store the new population
+	pop_vector children;
+	children.resize(parents.size());
+
+	//Auxiliary array to receive children from crossover function
+	pop_vector aux;
+	aux.resize(2);
+
+	for(size_t i = 0; i < parents.size(); i += 2)
+	{	
+		random = (float) rand() / RAND_MAX;
+		//Check if the crossover will happen
+		if(random<crossover_probability)
+		{	
+			crossover_point = rand() % tam;
+		 	aux = crossOver(parents[i],parents[i+1],crossover_point);
+			children.push_back(generateTail(aux[0]));
+			children.push_back(generateTail(aux[1]));
+		}
+		//The child is the parent
+		else
+		{
+			children.push_back(generateTail(parents[i]));
+			children.push_back(generateTail(parents[i+1]));
+		}
+	}
+	return children;
+}
+
 
 // Flip one random bit of each chromosome according to a fixed probability rate
 void mutatePopulation(pop_vector& population, float probability){
 
+	size_t cell;
 	for (auto &chromosome : population){
 		
 		if (rand() % 100 < (probability*100)){
