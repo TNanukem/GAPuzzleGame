@@ -13,14 +13,16 @@
 #define RIGHT 2
 #define LEFT 3
 
-#define t_fitness float
-
 using std::cout;
 using std::cin;
 using std::cerr;
 using std::array;
 using std::vector;
 using std::ifstream;
+
+typedef double t_fitness;
+
+typedef double t_probability;
 
 typedef array<array<int, BOARD_DIM>, BOARD_DIM> board_array;
 
@@ -30,7 +32,7 @@ typedef vector<chromosome_vector> pop_vector;
 
 typedef vector<t_fitness> fitness_vector;
 
-typedef vector<float> probability_vector;
+typedef vector<t_probability> probability_vector;
 
 typedef vector<array<int, 2>> board_position;
 
@@ -283,16 +285,16 @@ fitness_vector fitnessCalculation(pop_vector& population, board_array board, boo
 // Calculate the probability of selection for each chromosome based on its fitness value
 probability_vector calculateProbabilities(const fitness_vector& fitness){
 
-	t_fitness sum_of_fitness = std::accumulate(fitness.begin(), fitness.end(), 0);
+	t_fitness sum_of_fitness = std::accumulate(fitness.begin(), fitness.end(), 0.0);
 	probability_vector probabilities;
 	probabilities.resize(fitness.size());
-	float previous_probability = 0;
+	t_probability previous = 0;
 
 	// Calculate the probability of each chromosome being selected,
 	// i.e., the distance between his value and the previous one
 	for(size_t i = 0; i < fitness.size(); i++){
-		previous_probability += (fitness[i] / sum_of_fitness);
-		probabilities[i] = previous_probability;
+		probabilities[i] = previous + (fitness[i] / sum_of_fitness);
+		previous = probabilities[i];
 	}
 
 	return probabilities;
@@ -312,41 +314,45 @@ pop_vector selectReproducers(const pop_vector& population, const fitness_vector&
 	for(size_t i = 0; i < population.size(); i += 2){
 
 		// Selecting the first parent
-		float random = (float) rand() / RAND_MAX; // Random number between 0 and 1
-		float previous = 0;
-		for(size_t candidate = 0; candidate < probabilities.size(); candidate++){
+		t_probability random = (t_probability) rand() / RAND_MAX; // Random number between 0 and 1
+		t_probability previous = 0;
+		size_t candidate;
+		for(candidate = 0; candidate < probabilities.size(); candidate++){
 			if(random >= previous && random < probabilities[candidate]){
 				parents[i] = population[candidate];
 				break;
 			}
-			if(random == probabilities[candidate])
-				parents[i] = population[candidate];
+			previous = probabilities[candidate];
 		}
+		if(random == probabilities[candidate])
+			parents[i] = population[candidate];
 
 		// Selecting the second parent
-		random = (float) rand() / RAND_MAX;
+		random = (t_probability) rand() / RAND_MAX;
 		previous = 0;
-		for(size_t candidate = 0; candidate < probabilities.size(); candidate++){
+		for(candidate = 0; candidate < probabilities.size(); candidate++){
 			if(random >= previous && random < probabilities[candidate]){
 				parents[i+1] = population[candidate];
 				break;
 			}
-			if(random == probabilities[candidate])
-				parents[i+1] = population[candidate];
+			previous = probabilities[candidate];
 		}
+		if(random == probabilities[candidate])
+			parents[i+1] = population[candidate];
 
 		// The parents need to be different
 		while(parents[i] == parents[i+1]){
-			random = (float) rand() / RAND_MAX;
+			random = (t_probability) rand() / RAND_MAX;
 			previous = 0;
-			for(size_t candidate = 0; candidate < probabilities.size(); candidate++){
+			for(candidate = 0; candidate < probabilities.size(); candidate++){
 				if(random >= previous && random < probabilities[candidate]){
 					parents[i+1] = population[candidate];
 					break;
 				}
-				if(random == probabilities[candidate])
-					parents[i+1] = population[candidate];
+				previous = probabilities[candidate];
 			}
+			if(random == probabilities[candidate])
+				parents[i+1] = population[candidate];
 		}
 	}
 
@@ -436,8 +442,8 @@ void mutatePopulation(pop_vector& population, float probability){
 
 	size_t cell;
 	for (auto &chromosome : population){
-		
-		if (rand() % 100 < (probability*100)){
+		float random = rand() / RAND_MAX; // random number between 0 and 1
+		if (random < probability){
 			cell = rand() % chromosome.size();
 			chromosome[cell] = 1 - chromosome[cell];
 		}
@@ -523,10 +529,10 @@ int main (int argc, char* argv[]){
 		
 	 	if(!solved){
 			// Selects the candidates to reproduce
-			// 	pop_vector parents = selectReproducers(population, fitness);
+			pop_vector parents = selectReproducers(population, fitness);
 
 			// Candidates reproduction
-			// 	population = reproducePopulation(parents, crossover_probability, generation);
+			population = reproducePopulation(parents, crossover_probability);
 
 	 		// Mutate the population only if a solution hasn't been found
 	 		mutatePopulation(population, mutation_probability);
