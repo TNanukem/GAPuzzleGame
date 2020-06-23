@@ -36,6 +36,8 @@ typedef vector<t_probability> probability_vector;
 
 typedef vector<array<int, 2>> board_position;
 
+bool solved = false;
+vector<int> final_moves;
 
 // Generate and return an initial random population of chromosomes
 pop_vector generatePopulation(size_t initial_pop_size){
@@ -73,10 +75,11 @@ void check_solvability(pop_vector& population){
 
 }
 
-board_array generateFinalBoard(vector<int> moves, board_array board, bool* solution){
-
+board_array generateFinalBoard(vector<int> moves, board_array board){
+	
 	int old_value = -1;
 	array<int, 2> blank_position;
+	vector<int> aux;
 
 	int target[BOARD_DIM][BOARD_DIM] = {{1,2,3},{4,5,6},{7,8,0}};
 
@@ -90,6 +93,7 @@ board_array generateFinalBoard(vector<int> moves, board_array board, bool* solut
 	}
 
 	for(int i = 0; i < moves.size(); i++){
+		aux.push_back(moves[i]);
 		switch (moves[i]){
 		
 		case UP:
@@ -131,8 +135,14 @@ board_array generateFinalBoard(vector<int> moves, board_array board, bool* solut
 				}
 			}
 		}
-		*solution = aux_sol;
 		if(aux_sol == true){
+			cout << "SOLUÇÃO!!! \n";
+			
+			for(int k = 0; k < aux.size(); k++){
+				final_moves.push_back(aux[k]);
+			}
+
+			solved = true;
 			return board;
 		}
 	}
@@ -140,7 +150,7 @@ board_array generateFinalBoard(vector<int> moves, board_array board, bool* solut
 }
 
 // Given a chromosome, goes down on the tree to grab the final board for him
-board_array downOnTree(chromosome_vector& chromosome, board_array board, bool* solution, vector<int> *mov){
+board_array downOnTree(chromosome_vector& chromosome, board_array board, vector<int> *mov){
 
 	// Corner -> Only one possibility ((0,2),(2,0),(0,0),(2,2))
 	// Edge -> Two possibilities ((0,1), (1,0), (2,1), (1,2))
@@ -198,22 +208,18 @@ board_array downOnTree(chromosome_vector& chromosome, board_array board, bool* s
 		// Out of the possible moves, see which can be made given blank position
 		if(blank_position[0] == 0){
 			// We cannot go up
-			cout << "Cannot go up\n";
 			possible_moves.erase(std::remove(possible_moves.begin(), possible_moves.end(), UP), possible_moves.end());
 		}
 		if(blank_position[0] == BOARD_DIM-1){
 			// We cannot go down
-			cout << "Cannot go down\n";
 			possible_moves.erase(std::remove(possible_moves.begin(), possible_moves.end(), DOWN), possible_moves.end());
 		}
 		if(blank_position[1] == 0){
 			// We cannot go left
-			cout << "Cannot go left\n";
 			possible_moves.erase(std::remove(possible_moves.begin(), possible_moves.end(), LEFT), possible_moves.end());
 		}
 		if(blank_position[1] == BOARD_DIM-1){
 			// We cannot go right
-			cout << "Cannot go right\n";
 			possible_moves.erase(std::remove(possible_moves.begin(), possible_moves.end(), RIGHT), possible_moves.end());
 		}
 
@@ -232,30 +238,17 @@ board_array downOnTree(chromosome_vector& chromosome, board_array board, bool* s
 			blank_position[1] += 1;
 	}
 
-	cout << "Chromosome sequence of events: ";
-	for (int i = 0; i < moves.size(); i++){
-		cout << moves[i] << " ";
-	}
-	cout << "\n";
+	board_array final_board = generateFinalBoard(moves, board);
 
-	board_array final_board = generateFinalBoard(moves, board, solution);
-
-	if(*solution == true){
-		*mov = moves;
-	}
-
-	for(int i = 0; i < BOARD_DIM; i++){
-		for(int j = 0; j < BOARD_DIM; j++){
-			cout << final_board[i][j] << " ";
-		}
-		cout << "\n";
+	if(solved == true){
+		*mov = final_moves;
 	}
 
 	return final_board;
 }
 
 // Calculate and return the fitness of each chromosome
-fitness_vector fitnessCalculation(pop_vector& population, board_array board, bool* solution, vector<int> *mov){
+fitness_vector fitnessCalculation(pop_vector& population, board_array board, vector<int> *mov){
 
 	// The fitness of the chromosome is the inverse of the number of wrong tiles its final board
 	// has in relation to the target.
@@ -264,7 +257,7 @@ fitness_vector fitnessCalculation(pop_vector& population, board_array board, boo
 	int target[BOARD_DIM][BOARD_DIM] = {{1,2,3},{4,5,6},{7,8,0}};
 
 	for (auto &chromosome : population){
-		board_array chromosome_final_board = downOnTree(chromosome, board, solution, mov);
+		board_array chromosome_final_board = downOnTree(chromosome, board, mov);
 
 		float error = 0.0;
 		for(int i = 0; i < BOARD_DIM; i++){
@@ -274,9 +267,7 @@ fitness_vector fitnessCalculation(pop_vector& population, board_array board, boo
 			}
 		}
 		float fitness = 1/error;
-		//cout << fitness << "\n";
 		fitness_.push_back(fitness);
-		cout << "Fitness: " << fitness << "\n\n";
 	}
 
 	return fitness_;
@@ -364,6 +355,7 @@ pop_vector selectReproducers(const pop_vector& population, const fitness_vector&
 chromosome_vector generateTail(const chromosome_vector& child)
 {
 	chromosome_vector aux = child;
+	
 	size_t bin;
 	srand(time(NULL));
 	for (size_t i = 0; i < child.size(); i++)
@@ -394,9 +386,10 @@ pop_vector crossOver(const chromosome_vector& chromossomeX,const chromosome_vect
 		childX.push_back(chromossomeY[i]);
 		childY.push_back(chromossomeX[i]);
 	}
+
 	child.push_back(childX);
 	child.push_back(childY);
-
+	
 	return child;	
 }
 
@@ -409,7 +402,7 @@ pop_vector reproducePopulation(const pop_vector& parents, float crossover_probab
 	
 	//Array that will store the new population
 	pop_vector children;
-	children.resize(parents.size());
+	//children.resize(parents.size());
 
 	//Auxiliary array to receive children from crossover function
 	pop_vector aux;
@@ -418,6 +411,7 @@ pop_vector reproducePopulation(const pop_vector& parents, float crossover_probab
 	for(size_t i = 0; i < parents.size(); i += 2)
 	{	
 		random = (float) rand() / RAND_MAX;
+		
 		//Check if the crossover will happen
 		if(random<crossover_probability)
 		{	
@@ -433,15 +427,22 @@ pop_vector reproducePopulation(const pop_vector& parents, float crossover_probab
 			children.push_back(generateTail(parents[i+1]));
 		}
 	}
+
 	return children;
 }
 
 
 // Flip one random bit of each chromosome according to a fixed probability rate
 void mutatePopulation(pop_vector& population, float probability){
-
 	size_t cell;
+	int zeroes = 0;
+	int eights = 0;
 	for (auto &chromosome : population){
+		if(chromosome.size() == 0){
+			zeroes++;
+		} else {
+			eights++;
+		}
 		float random = rand() / RAND_MAX; // random number between 0 and 1
 		if (random < probability){
 			cell = rand() % chromosome.size();
@@ -507,11 +508,10 @@ int main (int argc, char* argv[]){
 	// Generate a random population
 	pop_vector population = generatePopulation(initial_pop_size);
 	
-	bool solved = false;
 	
 	vector<int> mov;
 
-	const float crossover_probability = 0.04;
+	const float crossover_probability = 0.5;
 	const float mutation_probability = 0.004;
 
 	unsigned generation = 1;
@@ -525,7 +525,8 @@ int main (int argc, char* argv[]){
 	// 	check_solvability(population);
 
 	 	// Function to calculate the fitness of each candidate
-		fitness_vector fitness = fitnessCalculation(population, board, &solved, &mov);
+		fitness_vector fitness = fitnessCalculation(population, board, &mov);
+		cout << solved << "\n";
 		
 	 	if(!solved){
 			// Selects the candidates to reproduce
@@ -533,15 +534,13 @@ int main (int argc, char* argv[]){
 
 			// Candidates reproduction
 			population = reproducePopulation(parents, crossover_probability);
-
+			
 	 		// Mutate the population only if a solution hasn't been found
 	 		mutatePopulation(population, mutation_probability);
 		}
-
 		generation++;
 		
 	}
-
 	printSolution(mov);
 
 	return 0;
