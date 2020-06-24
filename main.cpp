@@ -357,7 +357,6 @@ chromosome_vector generateTail(const chromosome_vector& child)
 	chromosome_vector aux = child;
 	
 	size_t bin;
-	srand(time(NULL));
 	for (size_t i = 0; i < child.size(); i++)
 	{
 		bin = rand()%2;
@@ -434,15 +433,9 @@ pop_vector reproducePopulation(const pop_vector& parents, float crossover_probab
 
 // Flip one random bit of each chromosome according to a fixed probability rate
 void mutatePopulation(pop_vector& population, float probability){
+
 	size_t cell;
-	int zeroes = 0;
-	int eights = 0;
 	for (auto &chromosome : population){
-		if(chromosome.size() == 0){
-			zeroes++;
-		} else {
-			eights++;
-		}
 		float random = rand() / RAND_MAX; // random number between 0 and 1
 		if (random < probability){
 			cell = rand() % chromosome.size();
