@@ -136,7 +136,6 @@ board_array generateFinalBoard(vector<int> moves, board_array board){
 			}
 		}
 		if(aux_sol == true){
-			cout << "SOLUÇÃO!!! \n";
 			
 			for(int k = 0; k < aux.size(); k++){
 				final_moves.push_back(aux[k]);
@@ -497,7 +496,7 @@ int main (int argc, char* argv[]){
 	cout << "\n";
 
 	size_t initial_pop_size = 100;
-	cout << "Teste\n";
+	
 	// Generate a random population
 	pop_vector population = generatePopulation(initial_pop_size);
 	
@@ -519,7 +518,12 @@ int main (int argc, char* argv[]){
 
 	 	// Function to calculate the fitness of each candidate
 		fitness_vector fitness = fitnessCalculation(population, board, &mov);
-		cout << solved << "\n";
+
+		double total = 0;
+		for(int i = 0; i < fitness.size(); i++){
+			total += fitness[i];
+		}
+		cout << "Mean Fitness: " << total/fitness.size() << "\n";
 		
 	 	if(!solved){
 			// Selects the candidates to reproduce
@@ -534,7 +538,7 @@ int main (int argc, char* argv[]){
 		generation++;
 		
 	}
-	printSolution(mov);
+	printSolution(final_moves);
 
 	return 0;
 }
