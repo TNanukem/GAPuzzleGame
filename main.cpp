@@ -58,23 +58,6 @@ pop_vector generatePopulation(size_t initial_pop_size){
 	}
 	return population;
 }
-
-// Check if any chromosome is unsolvable and, if so, removes it from the population
-void check_solvability(pop_vector& population){
-
-	// quem fizer essa função vai usar o método "erase" do vector
-
-	// por exemplo, o código abaixo remove o cromossomo de posição igual a 5
-	population.erase(population.begin() + 5);
-
-	// outro exemplo, o código abaixo itera sobre a população e remove os cromossomos cujo tamanho é maior que 2
-	for(auto elem = population.begin(); elem != population.end(); elem++){
-		if((*elem).size() > 2)
-			population.erase(elem);
-	}
-
-}
-
 board_array generateFinalBoard(vector<int> moves, board_array board){
 	
 	int old_value = -1;
@@ -466,6 +449,66 @@ void printSolution(vector<int> moves){
 	}
 	cout << "\n";
 }
+// Calculate the sum inversion for each position of the board
+int calculateInversion(board_array board,size_t x,size_t y)
+{
+    size_t sum = 0;
+    size_t aux = y;
+    for (size_t i = x; i < BOARD_DIM; i++)
+    {
+        for (size_t j = aux; j < BOARD_DIM; j++)
+        {
+            if(board[i][j] < board[x][y])
+            {
+                sum+=1;
+            }
+        } 
+        aux = 0;
+    }
+    return sum;
+}
+//Calculates the total sum of the board
+//Returns if the board is solvable or not
+bool isSolvable (board_array board)
+{
+    size_t sum = 0;
+    for(size_t i = 0; i < BOARD_DIM; i++)
+    {
+        for (size_t j = 0; j < BOARD_DIM; j++)
+        {
+            sum +=calculateInversion(board,i,j);
+        }
+    }
+	//If the total sum is even the board is solvable
+    if (sum%2==0)
+    {
+        return true;
+    }
+	//The sum is odd
+    else
+    {
+        return false;
+    }  
+}
+// Check if any chromosome is unsolvable and, if so, removes it from the population
+pop_vector check_solvability(pop_vector& population, board_array board){
+
+	pop_vector population_final = population;
+    vector<int> mov;
+
+    for (size_t i = 0; i < population_final.size(); i++)
+    {
+        chromosome_vector chromosome = population_final[i];
+        board_array chromosome_final_board = downOnTree(chromosome, board, &mov);
+        
+		//Remove the chromosome that's not solvable
+		if(!isSolvable(chromosome_final_board))
+        {
+			population_final.erase(population_final.begin() + i);
+        }
+    }
+	return population_final;
+}
 
 int main (int argc, char* argv[]){
 
@@ -514,7 +557,7 @@ int main (int argc, char* argv[]){
 		cout << "Running generation " << generation << "\n";
 
 	// 	// Check if any chromosome is unsolvable and, if so, removes it from the population
-	// 	check_solvability(population);
+		//population = check_solvability(population,board);
 
 	 	// Function to calculate the fitness of each candidate
 		fitness_vector fitness = fitnessCalculation(population, board, &mov);
