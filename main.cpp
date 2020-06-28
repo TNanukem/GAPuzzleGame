@@ -6,6 +6,7 @@
 #include <ctime>
 #include <cassert>
 #include <algorithm>
+#include <iomanip>
 
 #define BOARD_DIM 3
 #define DOWN 0
@@ -429,22 +430,26 @@ void mutatePopulation(pop_vector& population, float probability){
 
 // Print the solution found
 void printSolution(vector<int> moves){
-	cout << "Solution Found: \n";
+	
+	cout << "\nSolution was found with " << moves.size() << " movements:\n";
 	for(int i = 0; i < moves.size(); i++){
 	
 		switch (moves[i]){
 			case UP:
-				cout << "UP ";
+				cout << "[UP] ";
 				break;
 			case DOWN:
-				cout << "DOWN ";
+				cout << "[DOWN] ";
 				break;
 			case LEFT:
-				cout << "LEFT ";
+				cout << "[LEFT] ";
 				break;
 			case RIGHT:
-				cout << "RIGHT ";
+				cout << "[RIGHT] ";
 				break;
+		}
+		if( i % 10 == 0 && i != 0){
+			cout << "\n";
 		}
 	}
 	cout << "\n";
@@ -512,6 +517,8 @@ pop_vector check_solvability(pop_vector& population, board_array board){
 
 int main (int argc, char* argv[]){
 
+	std::cout << std::setprecision(3) << std::fixed;
+
 	srand(time(NULL));
 
 	// Requires the puzzle game
@@ -528,17 +535,17 @@ int main (int argc, char* argv[]){
 	}
 
 	board_array board;
-
+	cout << "Initial Board is: \n";
 	for(auto& line : board){
 		for(auto& col : line){
 			file >> col;
-			cout << col;
+			cout << col << " ";
 		}
 		cout << "\n";
 	}
 	cout << "\n";
 
-	size_t initial_pop_size = 100;
+	size_t initial_pop_size = 1000;
 	
 	// Generate a random population
 	pop_vector population = generatePopulation(initial_pop_size);
@@ -553,22 +560,54 @@ int main (int argc, char* argv[]){
 
 
 	while(solved == false){
+		cout << "________________________________________________________________________________________________________________\n";
+		cout << "|\t\t\t\t\t\t"
+			 << "Running generation " << generation << "\t\t\t\t\t\t|"
+			 << "\n";
 
-		cout << "Running generation " << generation << "\n";
-
-	// 	// Check if any chromosome is unsolvable and, if so, removes it from the population
+		// 	// Check if any chromosome is unsolvable and, if so, removes it from the population
 		//population = check_solvability(population,board);
 
 	 	// Function to calculate the fitness of each candidate
 		fitness_vector fitness = fitnessCalculation(population, board, &mov);
+		cout << "|\t" << "Size of chromosome" << "\t|";
+		cout << "\tAverage fitness" << "\t\t|";
+		cout << "\tMax fitness" << "\t|";
+		cout << "\tBest Board" << "\t|";
+		cout << "\n";
 
 		double total = 0;
+		double max = 0;
+		int max_id = -1;
+
 		for(int i = 0; i < fitness.size(); i++){
 			total += fitness[i];
+			if(fitness[i] > max){
+				max = fitness[i];
+				max_id = i;
+			}
 		}
-		cout << "Mean Fitness: " << total/fitness.size() << "\n";
+
+		
+
+		cout << "|\t" << population[0].size() << "\t\t\t|";
+		cout << "\t\t" << total/fitness.size() << "\t\t|";
+		cout << "\t" << max << "\t\t|";
+		cout << "   ";
+		
 		
 	 	if(!solved){
+			board_array best_board_of_generation = downOnTree(population[max_id], board, NULL);
+			for (int j = 0; j < BOARD_DIM; j++){
+				for (int k = 0; k < BOARD_DIM; k++){
+					cout << best_board_of_generation[j][k] << " ";
+				}
+			}
+
+			cout << "  |";
+
+			cout << "\n";
+
 			// Selects the candidates to reproduce
 			pop_vector parents = selectReproducers(population, fitness);
 
@@ -578,6 +617,11 @@ int main (int argc, char* argv[]){
 	 		// Mutate the population only if a solution hasn't been found
 	 		mutatePopulation(population, mutation_probability);
 		}
+		else {
+			cout << "1 2 3 4 5 6 7 8 0   |\n";
+			cout << "________________________________________________________________________________________________________________\n";
+		}
+
 		generation++;
 		
 	}
@@ -585,3 +629,4 @@ int main (int argc, char* argv[]){
 
 	return 0;
 }
+
