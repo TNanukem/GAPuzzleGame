@@ -514,24 +514,6 @@ bool isSolvable(const board_array& board)
 	}
 }
 
-// Check if any chromosome is unsolvable and, if so, removes it from the population
-pop_vector check_solvability(pop_vector population, const board_array& board){
-
-	vector<int> mov;
-
-	for(auto chromosome = population.begin(); chromosome != population.end(); chromosome++)
-	{
-		board_array chromosome_final_board = downOnTree(*chromosome, board, &mov);
-
-		//Remove the chromosome that's not solvable
-		if(!isSolvable(chromosome_final_board))
-		{
-			population.erase(chromosome);
-		}
-	}
-	return population;
-}
-
 int main (int argc, char* argv[]){
 
 	std::cout << std::setprecision(3) << std::fixed;
@@ -562,6 +544,12 @@ int main (int argc, char* argv[]){
 	}
 	cout << "\n";
 
+	if(!isSolvable(board))
+	{
+		cout << "This initial board cannot be solved.\n";
+		return 0;
+	}
+
 	size_t initial_pop_size = 1000;
 
 	// Generate a random population
@@ -579,9 +567,6 @@ int main (int argc, char* argv[]){
 		cout << "|\t\t\t\t\t\t"
 			<< "Running generation " << generation << "\t\t\t\t\t\t|"
 			<< "\n";
-
-		// Check if any chromosome is unsolvable and, if so, removes it from the population
-		population = check_solvability(population, board);
 
 		// Function to calculate the fitness of each candidate
 		fitness_vector fitness = fitnessCalculation(population, board, &mov);
