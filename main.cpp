@@ -143,7 +143,20 @@ board_array downOnTree(chromosome_vector& chromosome, board_array board, vector<
 	board_position edge = {{0,1}, {1,0}, {2,1}, {1,2}};
 	board_position middle = {{1,1}};
 
-	array<int, 2> blank_position = {2, 2};
+	array<int, 2> blank_position;
+
+	// Finding the blank
+	for (int i = 0; i < BOARD_DIM; i++)
+	{
+		for (int j = 0; j < BOARD_DIM; j++)
+		{
+			if (board[i][j] == 0)
+			{
+				blank_position = {i, j};
+			}
+		}
+	}
+
 	int previous_move = -1;
 
 	vector<int> moves = {};
@@ -340,7 +353,7 @@ chromosome_vector generateTail(const chromosome_vector& child)
 	chromosome_vector aux = child;
 	
 	size_t bin;
-	for (size_t i = 0; i < child.size(); i++)
+	for (size_t i = 0; i < 2; i++)
 	{
 		bin = rand()%2;
 		aux.push_back(bin);
