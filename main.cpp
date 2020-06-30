@@ -474,9 +474,13 @@ unsigned calculateInversion(const board_array& board, size_t x, size_t y)
 	{
 		for (size_t j = aux; j < BOARD_DIM; j++)
 		{
-			if(board[i][j] < board[x][y])
+			// If the tile is not blank (zero)
+			if(board[i][j] != 0)
 			{
-				sum += 1;
+				if(board[i][j] < board[x][y])
+				{
+					sum += 1;
+				}
 			}
 		}
 		aux = 0;
@@ -488,12 +492,14 @@ unsigned calculateInversion(const board_array& board, size_t x, size_t y)
 //Returns if the board is solvable or not
 bool isSolvable(const board_array& board)
 {
-	size_t sum = 0;
+	unsigned sum = 0;
 	for(size_t i = 0; i < BOARD_DIM; i++)
 	{
 		for (size_t j = 0; j < BOARD_DIM; j++)
 		{
-			sum += calculateInversion(board, i, j);
+			// If the tile is not blank (zero)
+			if(board[i][j] != 0)
+				sum += calculateInversion(board, i, j);
 		}
 	}
 	//If the total sum is even the board is solvable
@@ -513,15 +519,14 @@ pop_vector check_solvability(pop_vector population, const board_array& board){
 
 	vector<int> mov;
 
-	for (size_t i = 0; i < population.size(); i++)
+	for(auto chromosome = population.begin(); chromosome != population.end(); chromosome++)
 	{
-		chromosome_vector chromosome = population[i];
-		board_array chromosome_final_board = downOnTree(chromosome, board, &mov);
+		board_array chromosome_final_board = downOnTree(*chromosome, board, &mov);
 
 		//Remove the chromosome that's not solvable
 		if(!isSolvable(chromosome_final_board))
 		{
-			population.erase(population.begin() + i);
+			population.erase(chromosome);
 		}
 	}
 	return population;
