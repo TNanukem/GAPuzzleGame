@@ -7,6 +7,7 @@
 #include <cassert>
 #include <algorithm>
 #include <iomanip>
+#include <stdlib.h> 
 
 #define BOARD_DIM 3
 #define DOWN 0
@@ -252,8 +253,47 @@ board_array downOnTree(const chromosome_vector& chromosome, const board_array& b
 	return final_board;
 }
 
-// Calculate and return the fitness of each chromosome
-fitness_vector fitnessCalculation(const pop_vector& population, const board_array& board, vector<int>* mov){
+// Calculate and return the fitness of each chromosome in a Manhattan fashion
+fitness_vector fitnessCalculationManhattan(const pop_vector& population, const board_array& board, vector<int>* mov){
+
+	// The fitness of the chromosome is the sum of manhattan distances of every instance of the final board
+	// to the target position.
+
+	fitness_vector fitness_;
+	int target[BOARD_DIM][BOARD_DIM] = {{1,2,3},{4,5,6},{7,8,0}};
+
+	int pos_x, pos_y;
+
+	for (auto &chromosome : population){
+		board_array chromosome_final_board = downOnTree(chromosome, board, mov);
+
+		float error = 0.0;
+		for(int i = 0; i < BOARD_DIM; i++){
+			for(int j = 0; j < BOARD_DIM; j++){
+				pos_x = pos_y = -1;
+
+				// Finds the position of the target board
+				for(int k = 0; k < BOARD_DIM; k++){
+					for(int w = 0; w < BOARD_DIM; w++){
+						if(chromosome_final_board[i][j] == target[k][w]){
+							pos_x = k;
+							pos_y = w;
+						}
+					}
+				}
+
+				error += abs((i - pos_x)) + abs((j - pos_y));
+			}
+		}
+		float fitness = 1/error;
+		fitness_.push_back(fitness);
+	}
+
+	return fitness_;
+}
+
+// Calculate and return the fitness of each chromosome in a simple fashion
+fitness_vector fitnessCalculationSimple(const pop_vector& population, const board_array& board, vector<int>* mov){
 
 	// The fitness of the chromosome is the inverse of the number of wrong tiles its final board
 	// has in relation to the target.
@@ -577,7 +617,7 @@ int main (int argc, char* argv[]){
 			<< "\n";
 
 		// Function to calculate the fitness of each candidate
-		fitness_vector fitness = fitnessCalculation(population, board, &mov);
+		fitness_vector fitness = fitnessCalculationManhattan(population, board, &mov);
 		cout << "|\t" << "Size of chromosome" << "\t|";
 		cout << "\tAverage fitness" << "\t\t|";
 		cout << "\tMax fitness" << "\t|";
