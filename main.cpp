@@ -60,6 +60,7 @@ pop_vector generatePopulation(size_t initial_pop_size){
 	return population;
 }
 
+// Given an initial state and a list of movements, returns the final board obtained
 board_array generateFinalBoard(const vector<int>& moves, board_array board){
 
 	int old_value = -1;
@@ -68,7 +69,7 @@ board_array generateFinalBoard(const vector<int>& moves, board_array board){
 
 	int target[BOARD_DIM][BOARD_DIM] = {{1,2,3},{4,5,6},{7,8,0}};
 
-	// Finding the blank
+	// Finding the blank position on the board
 	for(int i = 0; i < BOARD_DIM; i++){
 		for(int j = 0; j < BOARD_DIM; j++){
 			if(board[i][j] == 0){
@@ -77,6 +78,7 @@ board_array generateFinalBoard(const vector<int>& moves, board_array board){
 		}
 	}
 
+	// For each move, we move the blank position to the right spot
 	for(size_t i = 0; i < moves.size(); i++){
 		aux.push_back(moves[i]);
 		switch (moves[i]){
@@ -111,6 +113,7 @@ board_array generateFinalBoard(const vector<int>& moves, board_array board){
 
 		}
 
+		// Verifies if the obtained board is a solution by comparing it to the target board
 		bool aux_sol = true;
 		for(int j = 0; j < BOARD_DIM; j++){
 			for(int k = 0; k < BOARD_DIM; k++){
@@ -120,6 +123,8 @@ board_array generateFinalBoard(const vector<int>& moves, board_array board){
 				}
 			}
 		}
+
+		// If the solution is found, the execution stops and the board is returned as well as the list of movements
 		if(aux_sol == true){
 
 			for(size_t k = 0; k < aux.size(); k++){
@@ -133,7 +138,7 @@ board_array generateFinalBoard(const vector<int>& moves, board_array board){
 	return board;
 }
 
-// Given a chromosome, goes down on the tree to grab the final board for him
+// Given a chromosome, goes down on the tree keeping each movement made
 board_array downOnTree(const chromosome_vector& chromosome, const board_array& board, vector<int>* mov){
 
 	// Corner -> Only one possibility ((0,2),(2,0),(0,0),(2,2))
@@ -146,7 +151,7 @@ board_array downOnTree(const chromosome_vector& chromosome, const board_array& b
 
 	array<int, 2> blank_position;
 
-	// Finding the blank
+	// Finding the blank position
 	for (int i = 0; i < BOARD_DIM; i++)
 	{
 		for (int j = 0; j < BOARD_DIM; j++)
@@ -170,7 +175,8 @@ board_array downOnTree(const chromosome_vector& chromosome, const board_array& b
 		int cells = 2 * chromosome[i] + chromosome[i-1];
 
 		// Verify where the blank is so we know which number to module for
-		// And if this is the first move, the module sums 1
+		// And if this is the first move, the module needs to be summed by 1 because there is no
+		// previous movement
 		if (find(corner.begin(), corner.end(), blank_position) != corner.end())
 
 			if(previous_move != -1)
@@ -225,6 +231,7 @@ board_array downOnTree(const chromosome_vector& chromosome, const board_array& b
 		previous_move = possible_moves[node];
 		moves.push_back(previous_move);
 
+		// Updates the blank position
 		if(previous_move == UP)
 			blank_position[0] -= 1;
 		if(previous_move == DOWN)
@@ -235,6 +242,7 @@ board_array downOnTree(const chromosome_vector& chromosome, const board_array& b
 			blank_position[1] += 1;
 	}
 
+	// Retrieves the final board after all the movements
 	board_array final_board = generateFinalBoard(moves, board);
 
 	if(solved == true){
@@ -526,7 +534,7 @@ int main (int argc, char* argv[]){
 		return 1;
 	}
 
-	// Reads the data and puts it on the board array
+	// Reads the data, puts it on the board array and print on the screen
 	ifstream file(argv[1]);
 	if(!file){
 		cerr << "There was an error loading the puzzle file" << "\n";
@@ -580,6 +588,7 @@ int main (int argc, char* argv[]){
 		double max = 0;
 		int max_id = -1;
 
+		// Retrieving the average and the maximum fitness of each generation
 		for(size_t i = 0; i < fitness.size(); i++){
 			total += fitness[i];
 			if(fitness[i] > max){
@@ -593,6 +602,7 @@ int main (int argc, char* argv[]){
 		cout << "\t" << max << "\t\t|";
 		cout << "   ";
 
+		// Retrieves the final board of the maximum fitness of this generation
 		if(!solved){
 			board_array best_board_of_generation = downOnTree(population[max_id], board, NULL);
 			for (int j = 0; j < BOARD_DIM; j++){
