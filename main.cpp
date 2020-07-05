@@ -7,9 +7,12 @@
 #include <cassert>
 #include <algorithm>
 #include <iomanip>
-#include <stdlib.h> 
+#include <cstdlib>
 
+// Board dimensions
 #define BOARD_DIM 3
+
+// Possible moves of the blank tile
 #define DOWN 0
 #define UP 1
 #define RIGHT 2
@@ -40,16 +43,17 @@ typedef vector<array<int, 2>> board_position;
 
 bool solved = false;
 vector<int> final_moves;
+board_array target = {{{1,2,3},{4,5,6},{7,8,0}}};
 
 // Generate and return an initial random population of chromosomes
-pop_vector generatePopulation(size_t initial_pop_size){
+pop_vector generatePopulation(const size_t initial_pop_size, const size_t initial_chromosome_size){
 
 	pop_vector population;
 	population.resize(initial_pop_size);
 
 	for(auto& chromosome : population)
 	{
-		chromosome.resize(4);
+		chromosome.resize(initial_chromosome_size);
 		for(auto&& cell : chromosome)
 		{
 			if(rand() % 100 > 50)
@@ -67,8 +71,6 @@ board_array generateFinalBoard(const vector<int>& moves, board_array board){
 	int old_value = -1;
 	array<int, 2> blank_position;
 	vector<int> aux;
-
-	int target[BOARD_DIM][BOARD_DIM] = {{1,2,3},{4,5,6},{7,8,0}};
 
 	// Finding the blank position on the board
 	for(int i = 0; i < BOARD_DIM; i++){
@@ -260,7 +262,6 @@ fitness_vector fitnessCalculationManhattan(const pop_vector& population, const b
 	// to the target position.
 
 	fitness_vector fitness_;
-	int target[BOARD_DIM][BOARD_DIM] = {{1,2,3},{4,5,6},{7,8,0}};
 
 	int pos_x, pos_y;
 
@@ -299,7 +300,6 @@ fitness_vector fitnessCalculationSimple(const pop_vector& population, const boar
 	// has in relation to the target.
 
 	fitness_vector fitness_;
-	int target[BOARD_DIM][BOARD_DIM] = {{1,2,3},{4,5,6},{7,8,0}};
 
 	for (auto &chromosome : population){
 		board_array chromosome_final_board = downOnTree(chromosome, board, mov);
@@ -437,6 +437,7 @@ pop_vector crossOver(const chromosome_vector& chromossomeX, const chromosome_vec
 }
 
 // Cross every pair of consecutive parents, which will generate new pairs of chromosomes (a new population)
+// The crossover is done by a single point of division
 pop_vector reproducePopulation(const pop_vector& parents, float crossover_probability){
 
 	float random;
@@ -451,6 +452,7 @@ pop_vector reproducePopulation(const pop_vector& parents, float crossover_probab
 
 	for(size_t i = 0; i < parents.size(); i += 2)
 	{
+		// Random number between 0 and 1
 		random = (float) rand() / RAND_MAX;
 
 		//Check if the crossover will happen
@@ -550,16 +552,10 @@ bool isSolvable(const board_array& board)
 				sum += calculateInversion(board, i, j);
 		}
 	}
+
 	//If the total sum is even the board is solvable
-	if (sum % 2 == 0)
-	{
-		return true;
-	}
-	//The sum is odd
-	else
-	{
-		return false;
-	}
+	//Otherwise, it's unsolvable
+	return (sum % 2 == 0);
 }
 
 int main (int argc, char* argv[]){
@@ -598,19 +594,19 @@ int main (int argc, char* argv[]){
 		return 0;
 	}
 
-	size_t initial_pop_size = 1000;
+	const size_t initial_pop_size = 1000;
+	const size_t initial_chromosome_size = 4;
+	const float crossover_probability = 0.04;
+	const float mutation_probability = 0.004;
 
 	// Generate a random population
-	pop_vector population = generatePopulation(initial_pop_size);
+	pop_vector population = generatePopulation(initial_pop_size, initial_chromosome_size);
 
 	vector<int> mov;
 
-	const float crossover_probability = 0.5;
-	const float mutation_probability = 0.004;
-
 	unsigned generation = 1;
 
-	while(solved == false){
+	while(!solved){
 		cout << "________________________________________________________________________________________________________________\n";
 		cout << "|\t\t\t\t\t\t"
 			<< "Running generation " << generation << "\t\t\t\t\t\t|"
