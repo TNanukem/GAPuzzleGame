@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include <fstream>
 #include <vector>
 #include <array>
@@ -24,6 +25,7 @@ using std::cerr;
 using std::array;
 using std::vector;
 using std::ifstream;
+using std::string;
 
 typedef double t_fitness;
 
@@ -488,6 +490,7 @@ pop_vector mutatePopulation(pop_vector population, float probability){
 		float random = rand() / RAND_MAX; // random number between 0 and 1
 		if (random < probability){
 			cell = rand() % chromosome.size();
+			// Flip the bit at the "cell" position
 			chromosome[cell] = 1 - chromosome[cell];
 		}
 	}
@@ -564,8 +567,28 @@ bool isSolvable(const board_array& board)
 	return (sum % 2 == 0);
 }
 
+// Read the initial board inside file with the given filename
+// and store it inside the "board" array.
+// Returns true if the read was successful or false if it wasn't
+bool readBoard(const string& filename, board_array& board)
+{
+	ifstream file(filename);
+	if(!file){
+		return false;
+	}
+
+	for(auto& line : board) {
+		for(auto& col : line) {
+			file >> col;
+		}
+	}
+
+	return true;
+}
+
 int main (int argc, char* argv[]){
 
+	// Print every float number with a precision of 3 digits
 	std::cout << std::setprecision(3) << std::fixed;
 
 	srand(time(NULL));
@@ -576,18 +599,16 @@ int main (int argc, char* argv[]){
 		return 1;
 	}
 
-	// Reads the data, puts it on the board array and print on the screen
-	ifstream file(argv[1]);
-	if(!file){
+	board_array board;
+	if(!readBoard(argv[1], board))
+	{
 		cerr << "There was an error loading the puzzle file" << "\n";
 		return 1;
 	}
 
-	board_array board;
 	cout << "Initial Board is: \n";
-	for(auto& line : board){
-		for(auto& col : line){
-			file >> col;
+	for(const auto& line : board){
+		for(const auto& col : line){
 			cout << col << " ";
 		}
 		cout << "\n";
