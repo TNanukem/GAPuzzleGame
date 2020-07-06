@@ -144,6 +144,11 @@ board_array generateFinalBoard(const vector<int>& moves, board_array board){
 // Given a chromosome, goes down on the tree keeping each movement made
 board_array downOnTree(const chromosome_vector& chromosome, const board_array& board, vector<int>* mov){
 
+	// If the solution was found, we return
+	if(solved == true){
+		return board;
+	}
+
 	// Corner -> Only one possibility ((0,2),(2,0),(0,0),(2,2))
 	// Edge -> Two possibilities ((0,1), (1,0), (2,1), (1,2))
 	// Middle -> Three possibilities ((1,1))
@@ -244,6 +249,7 @@ board_array downOnTree(const chromosome_vector& chromosome, const board_array& b
 		if(previous_move == RIGHT)
 			blank_position[1] += 1;
 	}
+
 
 	// Retrieves the final board after all the movements
 	board_array final_board = generateFinalBoard(moves, board);
