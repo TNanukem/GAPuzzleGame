@@ -18,6 +18,9 @@
 #define RIGHT 2
 #define LEFT 3
 
+// Assert with messages
+#define assertm(exp, msg) assert(((void)msg, exp))
+
 using std::cout;
 using std::cin;
 using std::cerr;
@@ -52,6 +55,9 @@ std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
 
 // Generate and return an initial random population of chromosomes
 pop_vector generatePopulation(const size_t initial_pop_size, const size_t initial_chromosome_size){
+
+	// The initial chromosome size must be even because we use 2 bits for each gene/move
+	assertm(initial_chromosome_size % 2 == 0, "The initial chromosome size must be even");
 
 	pop_vector population;
 	population.resize(initial_pop_size);
@@ -359,7 +365,7 @@ pop_vector selectReproducers(const pop_vector& population, const fitness_vector&
 	probability_vector probabilities = calculateProbabilities(fitness);
 
 	// The population size must be even for the next "for" to work properly
-	assert(population.size() % 2 == 0 && "The population size must be even");
+	assertm(population.size() % 2 == 0, "The population size must be even");
 
 	// Generate random real numbers between 0 and 1
 	static std::uniform_real_distribution<> distrib(0.0, 1.0);
@@ -621,13 +627,30 @@ int main (int argc, char* argv[]){
 	std::cout << std::setprecision(3) << std::fixed;
 
 	// Requires the puzzle game
-	if(argc < 2){
-		cerr << "Please, insert the path to the puzzle" << "\n";
+	if(argc != 6){
+		cerr << "Wrong number of arguments. The arguments must be given in the following order:\n"
+			"(1) path to the file containing the initial board\n"
+			"(2) initial population size\n"
+			"(3) initial chromosome size\n"
+			"(4) crossover probability\n"
+			"(5) mutation probability\n";
 		return 1;
 	}
 
+	// Getting the parameters of the GA
+	const size_t initial_pop_size = atol(argv[2]);
+	const size_t initial_chromosome_size = atol(argv[3]);
+	const float crossover_probability = atof(argv[4]);
+	const float mutation_probability = atof(argv[5]);
+
+	// Asserting that all probabilities are inside the required range
+	assertm(0. <= crossover_probability && crossover_probability <= 1., "The crossover probability value must be between 0 and 1!");
+	assertm(0. <= mutation_probability && mutation_probability <= 1., "The mutation probability value must be between 0 and 1!");
+
+	// Reading the initial board configuration
 	board_array board;
-	if(!readBoard(argv[1], board))
+	const string filename = argv[1];
+	if(!readBoard(filename, board))
 	{
 		cerr << "There was an error loading the puzzle file" << "\n";
 		return 1;
@@ -647,11 +670,6 @@ int main (int argc, char* argv[]){
 		cout << "This initial board cannot be solved.\n";
 		return 0;
 	}
-
-	const size_t initial_pop_size = 1000;
-	const size_t initial_chromosome_size = 4;
-	const float crossover_probability = 0.04;
-	const float mutation_probability = 0.004;
 
 	// Generate a random population
 	pop_vector population = generatePopulation(initial_pop_size, initial_chromosome_size);
