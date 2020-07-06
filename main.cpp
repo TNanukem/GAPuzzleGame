@@ -27,6 +27,7 @@ using std::cerr;
 using std::array;
 using std::vector;
 using std::ifstream;
+using std::ofstream;
 using std::string;
 
 typedef double t_fitness;
@@ -671,6 +672,17 @@ int main (int argc, char* argv[]){
 		return 0;
 	}
 
+	// File in which the results of each generation will be writen
+	string out_filename = "results.txt";
+	ofstream out_file(out_filename);
+	if(!out_file){
+		cerr << "There was a error creating the results file\n";
+		return 1;
+	}
+	out_file.precision(3);
+
+	out_file << "Generation | Avg fitness | Max fitness\n\n";
+
 	// Generate a random population
 	pop_vector population = generatePopulation(initial_pop_size, initial_chromosome_size);
 
@@ -683,6 +695,7 @@ int main (int argc, char* argv[]){
 		cout << "|\t\t\t\t\t\t"
 			<< "Running generation " << generation << "\t\t\t\t\t\t|"
 			<< "\n";
+		out_file << generation << " ";
 
 		// Function to calculate the fitness of each candidate
 		fitness_vector fitness = fitnessCalculationManhattan(population, board, &mov);
@@ -704,10 +717,13 @@ int main (int argc, char* argv[]){
 				max_id = i;
 			}
 		}
+		float average_fitness = total/fitness.size();
 
 		cout << "|\t" << population[0].size() << "\t\t\t|";
-		cout << "\t\t" << total/fitness.size() << "\t\t|";
+		cout << "\t\t" << average_fitness << "\t\t|";
+		out_file << average_fitness << " ";
 		cout << "\t" << max << "\t\t|";
+		out_file << max << "\n";
 		cout << "   ";
 
 		// Retrieves the final board of the maximum fitness of this generation
