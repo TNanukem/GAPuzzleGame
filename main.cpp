@@ -4,11 +4,10 @@
 #include <vector>
 #include <array>
 #include <numeric>
-#include <ctime>
 #include <cassert>
 #include <algorithm>
 #include <iomanip>
-#include <cstdlib>
+#include <random>
 
 // Board dimensions
 #define BOARD_DIM 3
@@ -47,18 +46,26 @@ bool solved = false;
 vector<int> final_moves;
 board_array target = {{{1,2,3},{4,5,6},{7,8,0}}};
 
+// To generate random numbers
+std::random_device rd;  //Will be used to obtain a seed for the random number engine
+std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+
 // Generate and return an initial random population of chromosomes
 pop_vector generatePopulation(const size_t initial_pop_size, const size_t initial_chromosome_size){
 
 	pop_vector population;
 	population.resize(initial_pop_size);
 
+	// Generate random int numbers between 1 and 100
+	std::uniform_int_distribution<> distrib(1, 100);
+
 	for(auto& chromosome : population)
 	{
 		chromosome.resize(initial_chromosome_size);
 		for(auto&& cell : chromosome)
 		{
-			if(rand() % 100 > 50)
+			float random = distrib(gen);
+			if(random > 50)
 				cell = 1;
 			else
 				cell = 0;
@@ -352,13 +359,16 @@ pop_vector selectReproducers(const pop_vector& population, const fitness_vector&
 	probability_vector probabilities = calculateProbabilities(fitness);
 
 	// The population size must be even for the next "for" to work properly
-	assert(population.size() % 2 == 0);
+	assert(population.size() % 2 == 0 && "The population size must be even");
+
+	// Generate random real numbers between 0 and 1
+	static std::uniform_real_distribution<> distrib(0.0, 1.0);
 
 	// Select the parents based on previous probability calculation
 	for(size_t i = 0; i < population.size(); i += 2){
 
 		// Selecting the first parent
-		t_probability random = (t_probability) rand() / RAND_MAX; // Random number between 0 and 1
+		t_probability random = distrib(gen);
 		t_probability previous = 0;
 		size_t candidate;
 		for(candidate = 0; candidate < probabilities.size(); candidate++){
@@ -372,7 +382,7 @@ pop_vector selectReproducers(const pop_vector& population, const fitness_vector&
 			parents[i] = population[candidate];
 
 		// Selecting the second parent
-		random = (t_probability) rand() / RAND_MAX;
+		random = distrib(gen);
 		previous = 0;
 		for(candidate = 0; candidate < probabilities.size(); candidate++){
 			if(random >= previous && random < probabilities[candidate]){
@@ -386,7 +396,7 @@ pop_vector selectReproducers(const pop_vector& population, const fitness_vector&
 
 		// The parents need to be different
 		while(parents[i] == parents[i+1]){
-			random = (t_probability) rand() / RAND_MAX;
+			random = distrib(gen);
 			previous = 0;
 			for(candidate = 0; candidate < probabilities.size(); candidate++){
 				if(random >= previous && random < probabilities[candidate]){
@@ -407,11 +417,17 @@ pop_vector selectReproducers(const pop_vector& population, const fitness_vector&
 //Duplicates the size of the chromossome for each child
 chromosome_vector generateTail(chromosome_vector child)
 {
-	unsigned bin;
+	// bit number that will be appended to tail
+	bool bin;
+
 	size_t tail_size = 2;
+
+	// Generate random bit numbers (0 or 1)
+	static std::uniform_int_distribution<> distrib(0, 1);
+
 	for (size_t i = 0; i < tail_size; i++)
 	{
-		bin = rand() % 2;
+		bin = distrib(gen);
 		child.push_back(bin);
 	}
 	return child;
@@ -458,15 +474,21 @@ pop_vector reproducePopulation(const pop_vector& parents, float crossover_probab
 	//Auxiliary array to receive children from crossover function
 	pop_vector aux;
 
+	// Generate random real numbers between 0 and 1
+	static std::uniform_real_distribution<> distrib_float(0.0, 1.0);
+
+	// Generate random int numbers between 0 and tam-1
+	std::uniform_int_distribution<> distrib_int(0, tam-1);
+
 	for(size_t i = 0; i < parents.size(); i += 2)
 	{
 		// Random number between 0 and 1
-		random = (float) rand() / RAND_MAX;
+		random = distrib_float(gen);
 
 		//Check if the crossover will happen
 		if(random < crossover_probability)
 		{
-			crossover_point = rand() % tam;
+			crossover_point = distrib_int(gen);
 			aux = crossOver(parents[i], parents[i+1], crossover_point);
 			children.push_back(generateTail(aux[0]));
 			children.push_back(generateTail(aux[1]));
@@ -485,11 +507,18 @@ pop_vector reproducePopulation(const pop_vector& parents, float crossover_probab
 // Flip one random bit of each chromosome according to a fixed probability rate
 pop_vector mutatePopulation(pop_vector population, float probability){
 
+	// Generate random real numbers between 0 and 1
+	static std::uniform_real_distribution<> distrib_float(0.0, 1.0);
+
+	// The cell that will be mutated
 	size_t cell;
 	for (auto &chromosome : population){
-		float random = rand() / RAND_MAX; // random number between 0 and 1
+		// Generate random int numbers between 0 and the size of the chromosome - 1
+		std::uniform_int_distribution<> distrib_int(0, chromosome.size()-1);
+		float random = distrib_float(gen);
+
 		if (random < probability){
-			cell = rand() % chromosome.size();
+			cell = distrib_int(gen);
 			// Flip the bit at the "cell" position
 			chromosome[cell] = 1 - chromosome[cell];
 		}
@@ -590,8 +619,6 @@ int main (int argc, char* argv[]){
 
 	// Print every float number with a precision of 3 digits
 	std::cout << std::setprecision(3) << std::fixed;
-
-	srand(time(NULL));
 
 	// Requires the puzzle game
 	if(argc < 2){
