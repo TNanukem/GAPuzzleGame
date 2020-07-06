@@ -622,6 +622,29 @@ bool readBoard(const string& filename, board_array& board)
 	return true;
 }
 
+// Check if the board is well formed, i.e. have all the numbers between 0 and 8 and they all appear just once
+bool checkBoard(const board_array& board)
+{
+	array<bool, BOARD_DIM*BOARD_DIM> contain;
+	contain.fill(false);
+
+	for(const auto& line : board)
+	{
+		for(const auto& col : line)
+		{
+			contain[col] = true;
+		}
+	}
+
+	for(const auto& elem : contain)
+	{
+		if(elem == false)
+			return false;
+	}
+
+	return true;
+}
+
 int main (int argc, char* argv[]){
 
 	// Print every float number with a precision of 3 digits
@@ -665,6 +688,12 @@ int main (int argc, char* argv[]){
 		cout << "\n";
 	}
 	cout << "\n";
+
+	if(!checkBoard(board))
+	{
+		cerr << "This initial board is invalid. Either one value appears twice or does not appear in the board\n";
+		return 1;
+	}
 
 	if(!isSolvable(board))
 	{
