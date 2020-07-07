@@ -786,6 +786,7 @@ int main (int argc, char* argv[]){
 
 	}
 	printSolution(final_moves);
+	out_file << "Moves: " << final_moves.size();
 
 	return 0;
 }
