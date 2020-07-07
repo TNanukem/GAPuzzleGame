@@ -1,6 +1,0 @@
-Generation | Avg fitness | Max fitness
-
-1 0.0642 0.167
-2 0.0652 0.5
-3 inf inf
-Moves: 18
