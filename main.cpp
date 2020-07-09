@@ -559,7 +559,71 @@ void printSolution(const vector<int>& moves){
 	}
 	cout << "\n";
 }
-
+//Function that executes each movement from the final solution
+//Used to test if the movements are correct
+void printBoardMoves(const vector<int> moves,board_array board)
+{
+	//Gets the row and collumn for blanck space
+    int linha,coluna,aux;
+    for (size_t i = 0; i < BOARD_DIM; i++)
+    {
+        for (size_t j = 0; j < BOARD_DIM; j++)
+        {
+            if(board[i][j]==0)
+            {
+                linha = i;
+                coluna = j;
+				break;
+            }
+        }
+    }
+	//Executes the movements
+    for(size_t i = 0; i < moves.size(); i++){
+		
+		if(moves[i] == UP)
+		{
+			cout <<"UP\n";
+			aux = board[linha-1][coluna];
+        	board[linha-1][coluna] = board[linha][coluna];
+        	board[linha][coluna] = aux;
+			linha -=1;
+		}
+		if(moves[i] == DOWN)
+		{
+			cout <<"DOWN\n";
+			aux = board[linha+1][coluna];
+            board[linha+1][coluna] = board[linha][coluna];
+            board[linha][coluna] = aux;
+			linha+=1;
+		}
+		if(moves[i] == LEFT)
+		{
+			cout <<"LEFT\n";
+			aux = board[linha][coluna-1];
+            board[linha][coluna-1] = board[linha][coluna];
+            board[linha][coluna] = aux;
+			coluna-=1;
+		}
+		if(moves[i] == RIGHT)
+		{
+			cout <<"RIGHT\n";
+			aux = board[linha][coluna+1];
+            board[linha][coluna+1] = board[linha][coluna];
+            board[linha][coluna] = aux;
+			coluna+=1;
+		}
+		for (size_t i = 0; i < BOARD_DIM; i++)
+    	{
+        	for (size_t j = 0; j < BOARD_DIM; j++)
+        	{
+           		cout << board[i][j];
+        	}
+        	cout<<"\n";
+    	}
+		cout<<"\n";
+    }
+    
+}
 // Calculate the sum inversion for each position of the board
 unsigned calculateInversion(const board_array& board, size_t x, size_t y)
 {
@@ -786,6 +850,7 @@ int main (int argc, char* argv[]){
 
 	}
 	printSolution(final_moves);
+	printBoardMoves(final_moves,board);
 	
 	out_file << "Moves: " << final_moves.size();
 
