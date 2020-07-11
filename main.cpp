@@ -134,10 +134,12 @@ board_array generateFinalBoard(const vector<int>& moves, board_array board){
 
 		// Verifies if the obtained board is a solution by comparing it to the target board
 		bool aux_sol = true;
-		for(int j = 0; j < BOARD_DIM; j++){
+		bool outer_loop = true;
+		for(int j = 0; j < BOARD_DIM && outer_loop; j++){
 			for(int k = 0; k < BOARD_DIM; k++){
 				if( board[j][k] != target[j][k] ){
 					aux_sol = false;
+					outer_loop = false;
 					break;
 				}
 			}
@@ -287,7 +289,7 @@ fitness_vector fitnessCalculationManhattan(const pop_vector& population, const b
 
 	int pos_x, pos_y;
 
-	for (auto &chromosome : population){
+	for (const auto &chromosome : population){
 		board_array chromosome_final_board = downOnTree(chromosome, board, mov);
 
 		float error = 0.0;
@@ -308,6 +310,8 @@ fitness_vector fitnessCalculationManhattan(const pop_vector& population, const b
 				error += abs((i - pos_x)) + abs((j - pos_y));
 			}
 		}
+		if(error == 0)
+			error = 1;
 		float fitness = 1/error;
 		fitness_.push_back(fitness);
 	}
@@ -333,6 +337,8 @@ fitness_vector fitnessCalculationSimple(const pop_vector& population, const boar
 					error += 1;
 			}
 		}
+		if(error == 0)
+			error = 1;
 		float fitness = 1/error;
 		fitness_.push_back(fitness);
 	}
@@ -469,7 +475,7 @@ pop_vector crossOver(const chromosome_vector& chromossomeX, const chromosome_vec
 
 // Cross every pair of consecutive parents, which will generate new pairs of chromosomes (a new population)
 // The crossover is done by a single point of division
-pop_vector reproducePopulation(const pop_vector& parents, float crossover_probability){
+pop_vector reproducePopulation(const pop_vector& parents, float crossover_probability, bool grow_chromosome){
 
 	float random;
 	size_t tam = parents[0].size();
@@ -497,18 +503,34 @@ pop_vector reproducePopulation(const pop_vector& parents, float crossover_probab
 		{
 			crossover_point = distrib_int(gen);
 			aux = crossOver(parents[i], parents[i+1], crossover_point);
-			children.push_back(generateTail(aux[0]));
-			children.push_back(generateTail(aux[1]));
+			chromosome_vector child1 = grow_chromosome ? generateTail(aux[0]) : aux[0];
+			chromosome_vector child2 = grow_chromosome ? generateTail(aux[1]) : aux[1];
+			children.push_back(child1);
+			children.push_back(child2);
 		}
 		//The child is the parent
 		else
 		{
-			children.push_back(generateTail(parents[i]));
-			children.push_back(generateTail(parents[i+1]));
+			chromosome_vector child1 = grow_chromosome ? generateTail(parents[0]) : parents[0];
+			chromosome_vector child2 = grow_chromosome ? generateTail(parents[1]) : parents[1];
+			children.push_back(child1);
+			children.push_back(child2);
 		}
 	}
 
 	return children;
+}
+
+// Replace a random children with the best parent
+void elitism(const pop_vector& population, pop_vector& children, size_t best_id)
+{
+	size_t tam_population = population.size();
+
+	// Generate random int numbers between 0 and tam_population-1
+	std::uniform_int_distribution<> distrib_int_p(0, tam_population-1);
+
+	size_t to_replace = distrib_int_p(gen);
+	children[to_replace] = population[best_id];
 }
 
 // Flip one random bit of each chromosome according to a fixed probability rate
@@ -564,65 +586,67 @@ void printSolution(const vector<int>& moves){
 void printBoardMoves(const vector<int> moves,board_array board)
 {
 	//Gets the row and collumn for blanck space
-    int linha,coluna,aux;
-    for (size_t i = 0; i < BOARD_DIM; i++)
-    {
-        for (size_t j = 0; j < BOARD_DIM; j++)
-        {
-            if(board[i][j]==0)
-            {
-                linha = i;
-                coluna = j;
+	int linha,coluna,aux;
+	bool outer_loop = true;
+	for (size_t i = 0; i < BOARD_DIM && outer_loop; i++)
+	{
+		for (size_t j = 0; j < BOARD_DIM; j++)
+		{
+			if(board[i][j]==0)
+			{
+				linha = i;
+				coluna = j;
+				outer_loop = false;
 				break;
-            }
-        }
-    }
+			}
+		}
+	}
 	//Executes the movements
-    for(size_t i = 0; i < moves.size(); i++){
-		
+	for(size_t i = 0; i < moves.size(); i++){
+
 		if(moves[i] == UP)
 		{
 			cout <<"UP\n";
 			aux = board[linha-1][coluna];
-        	board[linha-1][coluna] = board[linha][coluna];
-        	board[linha][coluna] = aux;
+			board[linha-1][coluna] = board[linha][coluna];
+			board[linha][coluna] = aux;
 			linha -=1;
 		}
 		if(moves[i] == DOWN)
 		{
 			cout <<"DOWN\n";
 			aux = board[linha+1][coluna];
-            board[linha+1][coluna] = board[linha][coluna];
-            board[linha][coluna] = aux;
+			board[linha+1][coluna] = board[linha][coluna];
+			board[linha][coluna] = aux;
 			linha+=1;
 		}
 		if(moves[i] == LEFT)
 		{
 			cout <<"LEFT\n";
 			aux = board[linha][coluna-1];
-            board[linha][coluna-1] = board[linha][coluna];
-            board[linha][coluna] = aux;
+			board[linha][coluna-1] = board[linha][coluna];
+			board[linha][coluna] = aux;
 			coluna-=1;
 		}
 		if(moves[i] == RIGHT)
 		{
 			cout <<"RIGHT\n";
 			aux = board[linha][coluna+1];
-            board[linha][coluna+1] = board[linha][coluna];
-            board[linha][coluna] = aux;
+			board[linha][coluna+1] = board[linha][coluna];
+			board[linha][coluna] = aux;
 			coluna+=1;
 		}
 		for (size_t i = 0; i < BOARD_DIM; i++)
-    	{
-        	for (size_t j = 0; j < BOARD_DIM; j++)
-        	{
-           		cout << board[i][j];
-        	}
-        	cout<<"\n";
-    	}
+		{
+			for (size_t j = 0; j < BOARD_DIM; j++)
+			{
+				cout << board[i][j];
+			}
+			cout<<"\n";
+		}
 		cout<<"\n";
-    }
-    
+	}
+
 }
 // Calculate the sum inversion for each position of the board
 unsigned calculateInversion(const board_array& board, size_t x, size_t y)
@@ -781,13 +805,21 @@ int main (int argc, char* argv[]){
 
 	vector<int> mov;
 
+	t_fitness best_fitness = 0;
+	bool improved = false;
+	unsigned n_generations_no_improve = 0;
+	bool grow_chromosome = false;
+
+	chromosome_vector the_best;
+
 	unsigned generation = 1;
 
 	while(!solved){
-		cout << "________________________________________________________________________________________________________________\n";
+		cout << "________________________________________________________________________________________________________________________________________\n";
 		cout << "|\t\t\t\t\t\t"
-			<< "Running generation " << generation << "\t\t\t\t\t\t|"
+			<< "Running generation " << generation << "\t\t\t\t\t\t\t\t\t|"
 			<< "\n";
+
 		out_file << generation << " ";
 
 		// Function to calculate the fitness of each candidate
@@ -796,11 +828,12 @@ int main (int argc, char* argv[]){
 		cout << "\tAverage fitness" << "\t\t|";
 		cout << "\tMax fitness" << "\t|";
 		cout << "\tBest Board" << "\t|";
+		cout << "\tBest so far" << "\t|";
 		cout << "\n";
 
 		double total = 0;
 		double max = 0;
-		int max_id = -1;
+		size_t max_id = -1;
 
 		// Retrieving the average and the maximum fitness of each generation
 		for(size_t i = 0; i < fitness.size(); i++){
@@ -814,17 +847,41 @@ int main (int argc, char* argv[]){
 
 		cout << "|\t" << population[0].size() << "\t\t\t|";
 		cout << "\t\t" << average_fitness << "\t\t|";
-		out_file << average_fitness << " ";
 		cout << "\t" << max << "\t\t|";
-		out_file << max << "\n";
 		cout << "   ";
+
+		out_file << average_fitness << " ";
+		out_file << max << "\n";
+
+		// The fitness have improved from the previous best one
+		if(max > best_fitness)
+		{
+			best_fitness = max;
+			the_best = population[max_id];
+			improved = true;
+			n_generations_no_improve = 0;
+		}
+		else
+		{
+			improved = false;
+			n_generations_no_improve++;
+		}
 
 		// Retrieves the final board of the maximum fitness of this generation
 		if(!solved){
-			board_array best_board_of_generation = downOnTree(population[max_id], board, NULL);
+			board_array best_board_of_generation = downOnTree(population[max_id], board, nullptr);
 			for (int j = 0; j < BOARD_DIM; j++){
 				for (int k = 0; k < BOARD_DIM; k++){
 					cout << best_board_of_generation[j][k] << " ";
+				}
+			}
+
+			cout << "  |   ";
+
+			board_array best_board_so_far = downOnTree(the_best, board, nullptr);
+			for (int j = 0; j < BOARD_DIM; j++){
+				for (int k = 0; k < BOARD_DIM; k++){
+					cout << best_board_so_far[j][k] << " ";
 				}
 			}
 
@@ -835,15 +892,30 @@ int main (int argc, char* argv[]){
 			// Selects the candidates to reproduce
 			pop_vector parents = selectReproducers(population, fitness);
 
+			if((!improved) && (n_generations_no_improve > 4))
+			{
+				grow_chromosome = true;
+				n_generations_no_improve = 0;
+			}
+
 			// Candidates reproduction
-			population = reproducePopulation(parents, crossover_probability);
+			pop_vector children = reproducePopulation(parents, crossover_probability, grow_chromosome);
+
+			// Keeps the best chromosome in the new population if it didn't grow
+			if(!grow_chromosome)
+				elitism(population, children, max_id);
+
+			// The children becomes the new population
+			population = children;
+
+			grow_chromosome = false;
 
 			// Mutate the population only if a solution hasn't been found
 			population = mutatePopulation(population, mutation_probability);
 		}
 		else {
 			cout << "1 2 3 4 5 6 7 8 0   |\n";
-			cout << "________________________________________________________________________________________________________________\n";
+			cout << "________________________________________________________________________________________________________________________________________\n";
 		}
 
 		generation++;
@@ -851,7 +923,7 @@ int main (int argc, char* argv[]){
 	}
 	printSolution(final_moves);
 	printBoardMoves(final_moves,board);
-	
+
 	out_file << "Moves: " << final_moves.size();
 
 	return 0;
