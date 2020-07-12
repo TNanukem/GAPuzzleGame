@@ -48,7 +48,6 @@ typedef vector<array<int, 2>> board_position;
 
 bool solved = false;
 vector<int> final_moves;
-board_array target = {{{1,2,3},{4,5,6},{7,8,0}}};
 
 // To generate random numbers
 std::random_device rd;  //Will be used to obtain a seed for the random number engine
@@ -82,7 +81,7 @@ pop_vector generatePopulation(const size_t initial_pop_size, const size_t initia
 }
 
 // Given an initial state and a list of movements, returns the final board obtained
-board_array generateFinalBoard(const vector<int>& moves, board_array board){
+board_array generateFinalBoard(const vector<int>& moves, board_array board, const board_array& target){
 
 	int old_value = -1;
 	array<int, 2> blank_position;
@@ -160,7 +159,8 @@ board_array generateFinalBoard(const vector<int>& moves, board_array board){
 }
 
 // Given a chromosome, goes down on the tree keeping each movement made
-board_array downOnTree(const chromosome_vector& chromosome, const board_array& board, vector<int>* mov){
+board_array downOnTree(const chromosome_vector& chromosome, const board_array& board,
+		const board_array& target, vector<int>* mov){
 
 	// If the solution was found, we return
 	if(solved == true){
@@ -270,7 +270,7 @@ board_array downOnTree(const chromosome_vector& chromosome, const board_array& b
 
 
 	// Retrieves the final board after all the movements
-	board_array final_board = generateFinalBoard(moves, board);
+	board_array final_board = generateFinalBoard(moves, board, target);
 
 	if(solved == true){
 		*mov = final_moves;
@@ -280,7 +280,8 @@ board_array downOnTree(const chromosome_vector& chromosome, const board_array& b
 }
 
 // Calculate and return the fitness of each chromosome in a Manhattan fashion
-fitness_vector fitnessCalculationManhattan(const pop_vector& population, const board_array& board, vector<int>* mov){
+fitness_vector fitnessCalculationManhattan(const pop_vector& population, const board_array& board,
+		const board_array& target, vector<int>* mov){
 
 	// The fitness of the chromosome is the sum of manhattan distances of every instance of the final board
 	// to the target position.
@@ -290,7 +291,7 @@ fitness_vector fitnessCalculationManhattan(const pop_vector& population, const b
 	int pos_x, pos_y;
 
 	for (const auto &chromosome : population){
-		board_array chromosome_final_board = downOnTree(chromosome, board, mov);
+		board_array chromosome_final_board = downOnTree(chromosome, board, target, mov);
 
 		float error = 0.0;
 		for(int i = 0; i < BOARD_DIM; i++){
@@ -320,7 +321,8 @@ fitness_vector fitnessCalculationManhattan(const pop_vector& population, const b
 }
 
 // Calculate and return the fitness of each chromosome in a simple fashion
-fitness_vector fitnessCalculationSimple(const pop_vector& population, const board_array& board, vector<int>* mov){
+fitness_vector fitnessCalculationSimple(const pop_vector& population, const board_array& board,
+		const board_array& target, vector<int>* mov){
 
 	// The fitness of the chromosome is the inverse of the number of wrong tiles its final board
 	// has in relation to the target.
@@ -328,7 +330,7 @@ fitness_vector fitnessCalculationSimple(const pop_vector& population, const boar
 	fitness_vector fitness_;
 
 	for (const auto &chromosome : population){
-		board_array chromosome_final_board = downOnTree(chromosome, board, mov);
+		board_array chromosome_final_board = downOnTree(chromosome, board, target, mov);
 
 		float error = 0.0;
 		for(int i = 0; i < BOARD_DIM; i++){
@@ -447,7 +449,8 @@ chromosome_vector generateTail(chromosome_vector child)
 }
 
 //Generates the crossover for the next generation
-pop_vector crossOver(const chromosome_vector& chromossomeX, const chromosome_vector& chromossomeY, size_t crossover_point)
+pop_vector crossOver(const chromosome_vector& chromossomeX, const chromosome_vector& chromossomeY,
+		size_t crossover_point)
 {
 	chromosome_vector childX;
 	chromosome_vector childY;
@@ -740,8 +743,10 @@ int main (int argc, char* argv[]){
 	const float mutation_probability = atof(argv[5]);
 
 	// Asserting that all probabilities are inside the required range
-	assertm(0. <= crossover_probability && crossover_probability <= 1., "The crossover probability value must be between 0 and 1!");
-	assertm(0. <= mutation_probability && mutation_probability <= 1., "The mutation probability value must be between 0 and 1!");
+	assertm(0. <= crossover_probability && crossover_probability <= 1.,
+			"The crossover probability value must be between 0 and 1!");
+	assertm(0. <= mutation_probability && mutation_probability <= 1.,
+			"The mutation probability value must be between 0 and 1!");
 
 	// Reading the initial board configuration
 	board_array board;
@@ -749,6 +754,13 @@ int main (int argc, char* argv[]){
 	if(!readBoard(filename, board))
 	{
 		cerr << "There was an error loading the puzzle file" << "\n";
+		return 1;
+	}
+
+	board_array target;
+	if(!readBoard("puzzles/goalstate.txt", target))
+	{
+		cerr << "There was an error loading the target board file" << "\n";
 		return 1;
 	}
 
@@ -800,7 +812,7 @@ int main (int argc, char* argv[]){
 		out_file << generation << " ";
 
 		// Function to calculate the fitness of each candidate
-		fitness_vector fitness = fitnessCalculationManhattan(population, board, &mov);
+		fitness_vector fitness = fitnessCalculationManhattan(population, board, target, &mov);
 		cout << "|\t" << "Size of chromosome" << "\t|";
 		cout << "\tAverage fitness" << "\t\t|";
 		cout << "\tMax fitness" << "\t|";
@@ -831,7 +843,7 @@ int main (int argc, char* argv[]){
 
 		// Retrieves the final board of the maximum fitness of this generation
 		if(!solved){
-			board_array best_board_of_generation = downOnTree(population[max_id], board, nullptr);
+			board_array best_board_of_generation = downOnTree(population[max_id], board, target, nullptr);
 			for (int j = 0; j < BOARD_DIM; j++){
 				for (int k = 0; k < BOARD_DIM; k++){
 					cout << best_board_of_generation[j][k] << " ";
