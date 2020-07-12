@@ -134,10 +134,12 @@ board_array generateFinalBoard(const vector<int>& moves, board_array board){
 
 		// Verifies if the obtained board is a solution by comparing it to the target board
 		bool aux_sol = true;
-		for(int j = 0; j < BOARD_DIM; j++){
+		bool outer_loop = true;
+		for(int j = 0; j < BOARD_DIM && outer_loop; j++){
 			for(int k = 0; k < BOARD_DIM; k++){
 				if( board[j][k] != target[j][k] ){
 					aux_sol = false;
+					outer_loop = false;
 					break;
 				}
 			}
@@ -287,7 +289,7 @@ fitness_vector fitnessCalculationManhattan(const pop_vector& population, const b
 
 	int pos_x, pos_y;
 
-	for (auto &chromosome : population){
+	for (const auto &chromosome : population){
 		board_array chromosome_final_board = downOnTree(chromosome, board, mov);
 
 		float error = 0.0;
@@ -308,6 +310,8 @@ fitness_vector fitnessCalculationManhattan(const pop_vector& population, const b
 				error += abs((i - pos_x)) + abs((j - pos_y));
 			}
 		}
+		if(error == 0)
+			error = 1;
 		float fitness = 1/error;
 		fitness_.push_back(fitness);
 	}
@@ -323,7 +327,7 @@ fitness_vector fitnessCalculationSimple(const pop_vector& population, const boar
 
 	fitness_vector fitness_;
 
-	for (auto &chromosome : population){
+	for (const auto &chromosome : population){
 		board_array chromosome_final_board = downOnTree(chromosome, board, mov);
 
 		float error = 0.0;
@@ -333,6 +337,8 @@ fitness_vector fitnessCalculationSimple(const pop_vector& population, const boar
 					error += 1;
 			}
 		}
+		if(error == 0)
+			error = 1;
 		float fitness = 1/error;
 		fitness_.push_back(fitness);
 	}
@@ -564,65 +570,67 @@ void printSolution(const vector<int>& moves){
 void printBoardMoves(const vector<int> moves,board_array board)
 {
 	//Gets the row and collumn for blanck space
-    int linha,coluna,aux;
-    for (size_t i = 0; i < BOARD_DIM; i++)
-    {
-        for (size_t j = 0; j < BOARD_DIM; j++)
-        {
-            if(board[i][j]==0)
-            {
-                linha = i;
-                coluna = j;
+	int linha,coluna,aux;
+	bool outer_loop = true;
+	for (size_t i = 0; i < BOARD_DIM && outer_loop; i++)
+	{
+		for (size_t j = 0; j < BOARD_DIM; j++)
+		{
+			if(board[i][j]==0)
+			{
+				linha = i;
+				coluna = j;
+				outer_loop = false;
 				break;
-            }
-        }
-    }
+			}
+		}
+	}
 	//Executes the movements
-    for(size_t i = 0; i < moves.size(); i++){
-		
+	for(size_t i = 0; i < moves.size(); i++){
+
 		if(moves[i] == UP)
 		{
 			cout <<"UP\n";
 			aux = board[linha-1][coluna];
-        	board[linha-1][coluna] = board[linha][coluna];
-        	board[linha][coluna] = aux;
+			board[linha-1][coluna] = board[linha][coluna];
+			board[linha][coluna] = aux;
 			linha -=1;
 		}
 		if(moves[i] == DOWN)
 		{
 			cout <<"DOWN\n";
 			aux = board[linha+1][coluna];
-            board[linha+1][coluna] = board[linha][coluna];
-            board[linha][coluna] = aux;
+			board[linha+1][coluna] = board[linha][coluna];
+			board[linha][coluna] = aux;
 			linha+=1;
 		}
 		if(moves[i] == LEFT)
 		{
 			cout <<"LEFT\n";
 			aux = board[linha][coluna-1];
-            board[linha][coluna-1] = board[linha][coluna];
-            board[linha][coluna] = aux;
+			board[linha][coluna-1] = board[linha][coluna];
+			board[linha][coluna] = aux;
 			coluna-=1;
 		}
 		if(moves[i] == RIGHT)
 		{
 			cout <<"RIGHT\n";
 			aux = board[linha][coluna+1];
-            board[linha][coluna+1] = board[linha][coluna];
-            board[linha][coluna] = aux;
+			board[linha][coluna+1] = board[linha][coluna];
+			board[linha][coluna] = aux;
 			coluna+=1;
 		}
 		for (size_t i = 0; i < BOARD_DIM; i++)
-    	{
-        	for (size_t j = 0; j < BOARD_DIM; j++)
-        	{
-           		cout << board[i][j];
-        	}
-        	cout<<"\n";
-    	}
+		{
+			for (size_t j = 0; j < BOARD_DIM; j++)
+			{
+				cout << board[i][j];
+			}
+			cout<<"\n";
+		}
 		cout<<"\n";
-    }
-    
+	}
+
 }
 // Calculate the sum inversion for each position of the board
 unsigned calculateInversion(const board_array& board, size_t x, size_t y)
@@ -788,6 +796,7 @@ int main (int argc, char* argv[]){
 		cout << "|\t\t\t\t\t\t"
 			<< "Running generation " << generation << "\t\t\t\t\t\t|"
 			<< "\n";
+
 		out_file << generation << " ";
 
 		// Function to calculate the fitness of each candidate
@@ -800,7 +809,7 @@ int main (int argc, char* argv[]){
 
 		double total = 0;
 		double max = 0;
-		int max_id = -1;
+		size_t max_id = -1;
 
 		// Retrieving the average and the maximum fitness of each generation
 		for(size_t i = 0; i < fitness.size(); i++){
@@ -814,14 +823,15 @@ int main (int argc, char* argv[]){
 
 		cout << "|\t" << population[0].size() << "\t\t\t|";
 		cout << "\t\t" << average_fitness << "\t\t|";
-		out_file << average_fitness << " ";
 		cout << "\t" << max << "\t\t|";
-		out_file << max << "\n";
 		cout << "   ";
+
+		out_file << average_fitness << " ";
+		out_file << max << "\n";
 
 		// Retrieves the final board of the maximum fitness of this generation
 		if(!solved){
-			board_array best_board_of_generation = downOnTree(population[max_id], board, NULL);
+			board_array best_board_of_generation = downOnTree(population[max_id], board, nullptr);
 			for (int j = 0; j < BOARD_DIM; j++){
 				for (int k = 0; k < BOARD_DIM; k++){
 					cout << best_board_of_generation[j][k] << " ";
@@ -851,7 +861,7 @@ int main (int argc, char* argv[]){
 	}
 	printSolution(final_moves);
 	printBoardMoves(final_moves,board);
-	
+
 	out_file << "Moves: " << final_moves.size();
 
 	return 0;
