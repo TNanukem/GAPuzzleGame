@@ -26,6 +26,10 @@ This is done according to a probability rate defined by the user.
 ## Mutation
 The mutation is done by flipping a random bit of the chromosome and also follows a probability rate to decide if it will happen or not for each chromosome.
 
+## Dependencies
+- GCC with C++ support (g++)
+- Make
+
 ## Compiling
 Inside the project's root, execute:
 ```
