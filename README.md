@@ -48,3 +48,23 @@ To run, inside the project's root execute:
 ## Link Video Youtube:
 
 https://www.youtube.com/watch?v=CkNCAzTyQVA
+
+## Alternate version
+Inside the branch "alternate-version" there's another implementation of the GA algorithm. In this branch, the chromosome only grows in size if:
+1. There was an improvement in the best fitness of the generation, while remaining the same chromosome size; or
+2. The best fitness didn't improve for `max_generations_no_improve` generations (the last parameter given in the command line).
+
+However, it's important to note that this version requires much higher crossover and mutation rates since it tends to produce a population that converge to the best chromosome of a given size, hence failing to find a reasonable solution to the puzzle.
+
+To run this version, first change to the correct branch:
+```
+git checkout alternate-version
+```
+then compile:
+```
+make all
+```
+lastly, execute the program:
+```
+./8puzzlealternate.exe <path to the puzzle> <population size> <initial chromosome size> <crossover probability> <mutation probability> <max_generations_no_improve>
+```
