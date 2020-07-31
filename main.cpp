@@ -739,13 +739,14 @@ int main (int argc, char* argv[]){
 	std::cout << std::setprecision(3) << std::fixed;
 
 	// Requires the puzzle game
-	if(argc != 6){
+	if(argc != 7){
 		cerr << "Wrong number of arguments. The arguments must be given in the following order:\n"
 			"(1) path to the file containing the initial board\n"
 			"(2) initial population size\n"
 			"(3) initial chromosome size\n"
 			"(4) crossover probability\n"
-			"(5) mutation probability\n";
+			"(5) mutation probability\n"
+			"(6) number of generations without fitness improvement before the chromosome grows in size\n";
 		return 1;
 	}
 
@@ -754,6 +755,7 @@ int main (int argc, char* argv[]){
 	const size_t initial_chromosome_size = atol(argv[3]);
 	const float crossover_probability = atof(argv[4]);
 	const float mutation_probability = atof(argv[5]);
+	const unsigned max_generations_no_improve = atoi(argv[6]);
 
 	// Asserting that all probabilities are inside the required range
 	assertm(0. <= crossover_probability && crossover_probability <= 1., "The crossover probability value must be between 0 and 1!");
@@ -892,7 +894,7 @@ int main (int argc, char* argv[]){
 			// Selects the candidates to reproduce
 			pop_vector parents = selectReproducers(population, fitness);
 
-			if((!improved) && (n_generations_no_improve > 4))
+			if((!improved) && (n_generations_no_improve > max_generations_no_improve))
 			{
 				grow_chromosome = true;
 				n_generations_no_improve = 0;
