@@ -45,7 +45,7 @@ To run, inside the project's root execute:
 ```
 ./8puzzle.exe <path to the puzzle> <population size> <initial chromosome size> <crossover probability> <mutation probability>
 ```
-## Link Video Youtube:
+## Link Youtube Video:
 
 https://www.youtube.com/watch?v=CkNCAzTyQVA
 
